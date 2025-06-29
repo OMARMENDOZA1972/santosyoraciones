@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estampitas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilos personalizados para el cuerpo para asegurar una fuente y un fondo consistentes */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* blue-50 de Tailwind */
+            color: #334155; /* slate-700 de Tailwind */
+        }
+        /* CSS personalizado para las tarjetas flip 3D */
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            min-height: 250px; /* Se agregó min-height para mantener el tamaño base, se eliminó la altura fija */
+            perspective: 1000px; /* Efecto 3D */
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%; /* Tomará la altura del padre .flip-card */
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md de Tailwind */
+            border-radius: 0.75rem; /* rounded-xl de Tailwind */
+        }
+
+        .flip-card.is-flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%; /* Tomará la altura del padre .flip-card-inner */
+            -webkit-backface-visibility: hidden; /* Safari */
+            backface-visibility: hidden;
+            border-radius: 0.75rem; /* rounded-xl de Tailwind */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .flip-card-front {
+            background-color: #f0f9ff; /* sky-50 de Tailwind */
+            color: black;
+        }
+
+        .flip-card-back {
+            background-color: #dbeafe; /* blue-100 de Tailwind */
+            color: black;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow-y: auto; /* Permite el desplazamiento para textos de oración largos */
+        }
+        .flip-card-back h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem; /* text-xl de Tailwind */
+            font-weight: 600; /* font-semibold de Tailwind */
+        }
+        .flip-card-back p {
+            font-size: 0.875rem; /* text-sm de Tailwind */
+            line-height: 1.5;
+            word-wrap: break-word; /* Asegura que el texto se ajuste dentro de la tarjeta */
+        }
+
+        /* Estilo de imagen para las tarjetas */
+        .flip-card-front img {
+            max-width: 100%; /* Hace que la imagen sea responsiva dentro de su contenedor */
+            max-height: 80%; /* Limita la altura para evitar desbordamiento y mantener la relación de aspecto */
+            height: auto; /* Mantiene la relación de aspecto */
+            object-fit: contain; /* Asegura que la imagen se ajuste dentro de sus límites sin recortar */
+            border-radius: 0.5rem; /* rounded-lg de Tailwind */
+        }
+
+        /* Ajustes responsivos para listas */
+        @media (min-width: 768px) { /* breakpoint md */
+            .list-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) { /* breakpoint lg */
+            .list-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        /* Estilo personalizado para el toggle de historias de santos */
+        .saint-item .saint-story {
+            max-height: 0;
+            overflow: hidden; /* Asegura que el contenido esté oculto cuando está colapsado */
+            overflow-y: auto; /* Agrega barra de desplazamiento cuando el contenido excede la altura máxima */
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            padding: 0 1rem; /* Ajusta el padding para el efecto de colapso */
+        }
+        .saint-item .saint-story.open {
+            max-height: 200px; /* Ajustar según sea necesario para que el contenido se ajuste y muestre la barra de desplazamiento */
+            padding: 1rem;
+        }
+        .saint-item .story-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 0.5rem 0;
+        }
+        .saint-item .story-header .fas {
+            transition: transform 0.3s ease-out;
+        }
+        .saint-item .story-header.active .fas {
+            transform: rotate(90deg); /* Rota el icono cuando está abierto */
+        }
+
+        /* Estilo del botón flotante */
+        .floating-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background-color: #2563eb; /* blue-600 de Tailwind */
+            color: white;
+            padding: 1rem;
+            border-radius: 9999px; /* rounded-full de Tailwind */
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg de Tailwind */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            z-index: 1000; /* Asegura que permanezca en la parte superior */
+            text-decoration: none; /* Elimina el subrayado para la etiqueta de anclaje */
+        }
+        .floating-button:hover {
+            background-color: #1d4ed8; /* blue-700 de Tailwind */
+        }
+
+        /* Ajustar la posición para el segundo botón flotante (desplazarse hacia arriba) */
+        .floating-button.back-to-top {
+            bottom: 7rem; /* Posicionar encima del botón existente "Más Historias" */
+            opacity: 0; /* Oculto por defecto */
+            visibility: hidden; /* Oculto por defecto */
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .floating-button.back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Estilos básicos del modal para carga/mensajes */
+        .modal {
+            display: none; /* Oculto por defecto */
+            position: fixed; /* Permanece en su lugar */
+            z-index: 1001; /* Se sitúa encima */
+            left: 0;
+            top: 0;
+            width: 100%; /* Ancho completo */
+            height: 100%; /* Altura completa */
+            overflow: auto; /* Habilitar desplazamiento si es necesario */
+            background-color: rgba(0,0,0,0.4); /* Negro con opacidad */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Podría ser responsivo */
+            max-width: 400px;
+            border-radius: 0.75rem;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Sección de encabezado: Contiene el logotipo, el título y los enlaces de navegación. -->
+    <header class="bg-blue-800 text-white p-4 shadow-md flex items-center justify-between rounded-b-xl">
+        <div class="flex-1 text-left">
+            <!-- Icono del logotipo: Un icono de cruz de Font Awesome. -->
+            <i class="fas fa-cross text-2xl md:text-3xl lg:text-4xl"></i>
+        </div>
+        <!-- Título principal de la página. -->
+        <h1 class="text-xl md:text-3xl lg:text-4xl font-extrabold flex-grow text-center">Santos y Oraciones</h1>
+        <!-- Enlaces de navegación a diferentes secciones de la página. -->
+        <nav class="flex-1 text-right">
+            <a href="#saints-cards" class="mx-2 md:mx-4 text-md md:text-lg hover:underline transition duration-300">Oraciones</a>
+        </nav>
+    </header>
+
+    <!-- Contenedor de contenido principal: Contiene todas las secciones principales de la página. -->
+    <main class="container mx-auto p-4 flex-grow">
+        <!-- Sección: Tarjetas interactivas con Santos y Oraciones. -->
+        <section id="saints-cards" class="mt-8 mb-12">
+            <h2 class="text-3xl font-bold text-center text-blue-700 mb-6">Oraciones de Santos (Haz clic para ver)</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                <!-- Nueva Tarjeta: Sagrado Corazón de Jesús -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://acdn-us.mitiendanube.com/stores/722/938/products/sagrado-corazon-ch-79afe33b710f1efb1617169017608470-480-0.jpg" alt="Sagrado Corazón de Jesús" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">Sagrado Corazón de Jesús</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración al Sagrado Corazón de Jesús</h2>
+                            <p>Oh Sagrado Corazón de Jesús, fuente de todo consuelo, en Ti confío y espero. Haz mi corazón semejante al tuyo, lleno de amor, humildad y paciencia. Que tu amor nos guíe y nos transforme, para que podamos amarte más y más, y servir a nuestros hermanos con un corazón generoso.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nueva Tarjeta: Santa Madre Teresa de Calcuta -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRch6mZxw-22cjQgO_DpbJ9wHQ4M8kTAY2CyxOzp8fhbAuM02J8LVw2MSfFv4TxubtwFXhVGZypdcykykco6Bbi5w" alt="Santa Madre Teresa de Calcuta" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">Santa Madre Teresa de Calcuta</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración de Santa Madre Teresa de Calcuta</h2>
+                            <p>Haz, Señor, que yo vea en cada enfermo Tu propio Rostro. Que cada enfermo, cada pobre, cada solitario, cada anciano, cada persona sin hogar, sea para mí Tu propio Cuerpo doliente. Haz que yo no busque otra cosa que Tu voluntad. Amén.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nueva Tarjeta: San Expedito -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://lh4.googleusercontent.com/proxy/3Pu1WDeuEP4fiuTrd0xsqM0zyfxwWtPYpO5_fDT0dZrG8RAywE_USVYmzzs0Kw4m6yr3jUItqzi7Xdmp-AujpF7xPxfnjdBfM0rMPXrgh3ytlAhErWCrnlOg629syCz8hsOlSz1rnFfOx_zgNYuEpYXbw_50iSRIP4AoI2VTozeG" alt="San Expedito" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Expedito</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración a San Expedito</h2>
+                            <p>Mi San Expedito de las causas justas y urgentes, intercede por mí junto a Nuestro Señor Jesucristo, para que venga en mi socorro en esta hora de aflicción y desesperanza. Mi San Expedito, protégeme, ayúdame, otórgame fuerza, coraje y serenidad. ¡Atiende mi pedido! Amén.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nueva Tarjeta: San Cayetano -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://www.devocionario.com/imagenes/cayetano_1.jpg" alt="San Cayetano" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Cayetano</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración a San Cayetano</h2>
+                            <p>¡Oh glorioso San Cayetano, Padre de la Providencia, no nos dejes sin el pan de cada día! Bendice nuestras casas, nuestros trabajos, y a toda nuestra familia, para que nunca nos falte el sustento necesario. Amén.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nueva Tarjeta: San Benito -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://santiagodecangas.com/wp-content/uploads/2022/07/san-benito.jpg" alt="San Benito" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Benito</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración a San Benito</h2>
+                            <p>Oh glorioso San Benito, que con tu vida y tu regla guiaste a tantos al servicio de Dios. Protege a nuestras familias del mal, de las tentaciones y de toda adversidad. Que por tu intercesión, alcancemos la paz y la gracia de Dios. Amén.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tarjeta 1: San Francisco de Asís -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQ0zKhHNx1n2UHQdH-5sfD7xuzbaMqYyzze-wAa3Ru5jX9cMF8GI9YEsRZ6Lpf4-v_O4qcj2LzewgCSYY-WA0WlcA" alt="San Francisco de Asís" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Francisco de Asís</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <p>Señor, haz de mí un instrumento de tu paz. Donde haya odio, siembre yo amor; donde haya ofensa, perdón; donde haya duda, fe; donde haya desesperación, esperanza; donde haya tinieblas, luz; donde haya tristeza, alegría. Oh Divino Maestro, concédeme que no busque tanto ser consolado como consolar; ser comprendido como comprender; ser amado como amar. Porque dándose es como se recibe; perdonando es como se es perdonado; muriendo es como se nace a la vida eterna.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Santa Teresa de Ávila -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://education.dublindiocese.ie/wp-content/uploads/sites/5/2012/10/saint-teresa-avila.jpg" alt="Santa Teresa de Ávila" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">Santa Teresa de Ávila</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oracion</h2>
+                            <p>En la Cruz esta la gloria, y el honor. Y en el padecer dolor, vida y consuelo. Y el camino mas seguro para el cielo.<br>
+                            Nada te turbe, nada te espante; todo se pasa, Dios no se muda; la paciencia todo lo alcanza; quien a Dios tiene, nada le falta. Solo Dios basta.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3: San Antonio de Padua -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://letaniascristianas.com/wp-content/uploads/2024/12/san-antonio-padua.webp" alt="San Antonio de Padua" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Antonio de Padua</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oracion</h2>
+                            <p>Oh glorioso San Antonio, que encontraste tu tesoro en el servicio a Dios y a los demás. Te ruego intercedas por mí para encontrar lo que se ha perdido en mi vida, no solo objetos materiales, sino también la fe, la esperanza y el amor. Ayúdame a seguir tu ejemplo de caridad y devoción.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 4: Santa Catalina de Siena -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/a/aa/Catherine_of_Siena.jpg" alt="Santa Catalina de Siena" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">Santa Catalina de Siena</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oracion</h2>
+                            <p>Oh, eterna y divina Voluntad, yo te adoro, te amo, te bendigo, te glorifico en esta hora, en este punto de mi vida y en cada momento de mi vida, y en toda la eternidad. Oh, divina Majestad, te ofrezco esta mi voluntad, para que la tuya se cumpla en mí, en mi alma, en mi cuerpo y en todas mis potencias.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 5: San Juan Pablo II -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://sagradoscorazonesunidos.org/wp-content/uploads/2021/10/fotooficial.jpg" alt="San Juan Pablo II" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Juan Pablo II</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oracion</h2>
+                            <p>Oh San Juan Pablo II, intercede por nosotros, para que podamos vivir nuestra fe con valentía y alegría, sirviendo a Dios y a nuestros hermanos con un corazón generoso. Ayúdanos a defender la dignidad de cada persona y a construir una civilización del amor.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 6: Santa Clara de Asís -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://www.ofschile.cl/img/hclara.jpg" alt="Santa Clara de Asís" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">Santa Clara de Asís</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oracion</h2>
+                            <p>Que el Señor te bendiga y te guarde; te muestre su faz y tenga misericordia de ti. Que vuelva su rostro hacia ti y te conceda la paz. Que el Señor te dé su santa bendición.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 7: San Agustín de Hipona -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAANS4rWKn4mHiPKaFz1ZY8W_vkFq9hTV1RcBRyGHxTITqEhf5sUFf7vesABzLEqN5qgM&usqp=CAU" alt="San Agustín de Hipona" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Agustín de Hipona</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oracion</h2>
+                            <p>Tarde te amé, belleza tan antigua y tan nueva, tarde te amé. Y he aquí que estabas dentro de mí y yo fuera, y allí te buscaba; y deforme como era, me lanzaba sobre estas hermosuras que tú creaste. Tú estabas conmigo, mas yo no estaba contigo.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 8: Santa Faustina Kowalska -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://www.fatima.pe/images/new/2022/dm244a.jpg" alt="Santa Faustina Kowalska" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">Santa Faustina Kowalska</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración a la Divina Misericordia</h2>
+                            <p>Oh Sangre y Agua que brotasteis del Corazón de Jesús como fuente de misericordia para nosotros, en Ti confío.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 9: San Vicente de Paúl -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://pauleszaragoza.org/wp-content/uploads/2012/09/imagen-de-san-vicente-de-paul.jpg" alt="San Vicente de Paúl" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Vicente de Paúl</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oracion</h2>
+                            <p>Señor, enséñame a ser generoso; a servirte como te mereces; a dar sin medida; a combatir sin preocuparme de las heridas; a trabajar sin buscar el reposo; a gastar mi vida sin esperar otra recompensa que saber que hago tu santa voluntad. Amén.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 10: Santa Gema Galgani -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgeZqrqsZJuH7FbLpAUY8iEIvI4Obg_MZtRAuyUyxj8CLxL5lJswjQO9ZWfdOUNiiyL8dHp1w_AqBNjSa9GzqwyOGHMrWxM4BKKF-PHdAOHWtsi_ZhSqSae6BLWLn5_gTL3SJHFs4Mju9fx/w1200-h630-p-k-no-nu/Santa-Gema-Galgani-8.jpg" alt="Santa Gema Galgani" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">Santa Gema Galgani</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración de Santa Gema</h2>
+                            <p>¡Oh, Dios mío, cuán grande es vuestro amor por mí! Cuán grande es vuestra bondad y vuestra caridad, que me habéis amado con un amor tan inmenso que no habéis ahorrado vuestro único Hijo para redimirme.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 11: San Martín de Porres -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://www.ecured.cu/images/a/a5/San_martin.jpg" alt="San Martín de Porres" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Martín de Porres</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración a San Martín de Porres</h2>
+                            <p>Amado San Martín de Porres, humilde siervo de Dios y modelo de caridad. Te pedimos que intercedas por nosotros para que, siguiendo tu ejemplo, sepamos amar y servir a todos, especialmente a los más necesitados, sin distinción de raza ni condición.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 12: Santa Rita de Casia -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://mission.spaziospadoni.org/wp-content/uploads/2024/05/Rita.jpg" alt="Santa Rita de Casia" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">Santa Rita de Casia</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración a Santa Rita</h2>
+                            <p>Oh gloriosa Santa Rita, abogada de los casos imposibles, auxilio de los desesperados. Confiamos en tu poderosa intercesión, obtennos de Dios la gracia que necesitamos. Ayúdanos a llevar nuestras cruces con paciencia y amor.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 13: San Judas Tadeo -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://i.pinimg.com/736x/47/9a/5b/479a5bc08bc70b1b8ccec668beeac85e.jpg" alt="San Judas Tadeo" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Judas Tadeo</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración a San Judas Tadeo</h2>
+                            <p>San Judas Tadeo, apóstol glorioso, fiel siervo y amigo de Jesús, tú que eres el patrón de los casos difíciles y desesperados. Ruega por nosotros y concédenos la ayuda que tanto necesitamos en este momento.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 14: Santa Teresita del Niño Jesús -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://ministerioimitandoajesus.weebly.com/uploads/3/8/4/3/38434695/217912_orig.jpg?226" alt="Santa Teresita del Niño Jesús" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">Santa Teresita del Niño Jesús</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración de Santa Teresita</h2>
+                            <p>Oh Jesús, mi Amor, mi Cruz, mi todo. Te amo, mi Dios. Te amo, mi Cristo. Te amo, mi Salvador. Te amo, mi Esposo. Quiero amarte siempre, amarte hasta el fin. Quiero amarte con todo mi corazón, con toda mi alma, con todas mis fuerzas.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 15: San Miguel Arcángel -->
+                <div class="flip-card cursor-pointer" onclick="this.classList.toggle('is-flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-rbT_3gpqGNJvCOREe-BoPZdBTINeZUCf3ilxcasD1pxJd9qOWfEGKQaC7Y9nh6ruz9U&usqp=CAU" alt="San Miguel Arcángel" onerror="this.onerror=null;this.src='https://placehold.co/150x200/cccccc/333333?text=Imagen+no+disponible';">
+                            <p class="mt-2 text-lg font-medium text-blue-800">San Miguel Arcángel</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h2>Oración a San Miguel Arcángel</h2>
+                            <p>San Miguel Arcángel, defiéndenos en la batalla. Sé nuestro amparo contra la perversidad y acechanzas del demonio. Reprímale Dios, pedimos suplicantes, y tú, Príncipe de la Milicia Celestial, arroja al infierno con el divino poder a Satanás y a los demás espíritus malignos que andan dispersos por el mundo para la perdición de las almas. Amén.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Esta sección se ocultará ya que el botón "Más Historias" ahora enlaza a otra página. -->
+        <section id="more-stories-section" class="mt-12 py-8 bg-blue-50 rounded-lg text-center text-blue-600 font-semibold text-xl hidden">
+            <!-- El contenido para más historias se cargaría aquí dinámicamente si el botón no enlazara a otra página. -->
+            Más historias se cargarán aquí...
+        </section>
+    </main>
+
+    <!-- Botón flotante para enlazar a otra página de historias. -->
+    <a href="index.html" class="floating-button">
+        <i class="fas fa-plus text-2xl"></i>
+        <span class="ml-2 text-lg font-semibold hidden md:inline">Más Historias</span>
+    </a>
+
+    <!-- Botón flotante para desplazarse hacia arriba -->
+    <button id="scrollToTopBtn" class="floating-button back-to-top" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up text-2xl"></i>
+        <span class="ml-2 text-lg font-semibold hidden md:inline">Volver arriba</span>
+    </button>
+
+    <!-- Modal para Carga/Mensajes -->
+    <div id="loadingModal" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+            <p id="modalMessage" class="text-lg text-slate-700">Cargando...</p>
+        </div>
+    </div>
+    <!-- Sección de pie de página: Contiene derechos de autor y enlaces a redes sociales. -->
+    <footer class="bg-blue-800 text-white p-6 mt-8 rounded-t-xl shadow-lg">
+        <div class="container mx-auto flex flex-col md:flex-row items-center justify-between">
+            <div class="text-center md:text-left mb-4 md:mb-0">
+                <p>Autor &copy; OM1972<br>  Todos los derechos reservados.</p>
+                <p class="text-sm">2025 Santos y Oraciones.</p>
+            </div>
+            
+        </div>
+    </footer>
+
+    <script>
+        // --- Funciones del Modal ---
+        // Estas funciones ahora son más genéricas, aunque no se usan para "Más Historias"
+        // ya que el botón ahora navega a una nueva página. Podrían usarse para otras
+        // cargas o mensajes en el futuro.
+        function showModal(message) {
+            const modal = document.getElementById('loadingModal');
+            const modalMessage = document.getElementById('modalMessage');
+            modalMessage.textContent = message;
+            modal.style.display = 'flex'; // Usar flex para centrar el contenido
+        }
+
+        function hideModal() {
+            const modal = document.getElementById('loadingModal');
+            modal.style.display = 'none';
+        }
+
+       
+        // --- Lógica del botón para desplazarse hacia arriba ---
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+        // Muestra/oculta el botón según la posición de desplazamiento
+        window.onscroll = function() {
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                scrollToTopBtn.classList.add('show');
+            } else {
+                scrollToTopBtn.classList.remove('show');
+            }
+        };
+
+        // Desplazarse a la parte superior del documento
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+    </script>
+</body>
+</html>

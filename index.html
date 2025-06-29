@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santos y Oraciones</title>
+    <!-- Tailwind CSS CDN para el estilo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts para la fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome CDN para íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Color de fondo suave */
+        }
+
+        /* Estilos para las tarjetas que giran */
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            height: 300px; /* Altura fija para las tarjetas */
+            perspective: 1000px; /* Para efecto 3D */
+            border-radius: 1rem; /* rounded-xl */
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s; /* Transición suave de rotación */
+            transform-style: preserve-3d; /* Permite que los elementos hijos se posicionen en 3D */
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-lg */
+        }
+
+        .flip-card.is-flipped .flip-card-inner {
+            transform: rotateY(180deg); /* Gira la tarjeta 180 grados */
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden; /* Oculta la parte trasera mientras gira */
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem; /* p-6 */
+        }
+
+        .flip-card-front {
+            background-color: #fff; /* Fondo blanco para el frente */
+            color: #1a202c; /* Color de texto oscuro */
+        }
+
+        .flip-card-back {
+            background-color: #3b82f6; /* bg-blue-500 para el fondo del reverso */
+            color: white; /* Texto blanco en el reverso */
+            transform: rotateY(180deg); /* La parte trasera está rotada por defecto */
+            text-align: left;
+            justify-content: flex-start;
+            padding-top: 2rem; /* Ajuste para el texto */
+        }
+        /* Estilos para el párrafo en el reverso de la tarjeta, incluyendo el scroll oculto */
+        .flip-card-back p {
+            line-height: 1.6;
+            font-size: 1rem; /* md:text-base */
+            max-height: 150px; /* Altura máxima antes de que aparezca el scroll */
+            overflow-y: auto; /* Agrega scroll vertical si el contenido excede la altura máxima */
+            padding-right: 0.5rem; /* Espacio para el scrollbar (se ocultará visualmente) */
+
+            /* Ocultar scrollbar para WebKit (Chrome, Safari, Edge) */
+            &::-webkit-scrollbar {
+                display: none; /* Oculta el scrollbar visualmente */
+                width: 0; /* Asegura que no ocupe espacio */
+                height: 0;
+            }
+            /* Ocultar scrollbar para Firefox */
+            scrollbar-width: none; /* "none" para ocultarlo */
+        }
+
+        /* Estilos para la ventana modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #4a5568;
+        }
+
+        /* Estilos para el efecto flotante de las secciones y fondo tranquilo */
+        .floating-section {
+            background: linear-gradient(135deg, #f8faff, #e0e6f0); /* Fondo degradado suave */
+            background-size: 200% 200%; /* Tamaño más grande para la animación */
+            animation: gradient-animation 15s ease infinite; /* Animación de fondo */
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Transición para el efecto flotante */
+            will-change: transform, box-shadow; /* Optimización de rendimiento */
+        }
+
+        .floating-section:hover {
+            transform: translateY(-5px); /* Efecto de "flotar" ligeramente hacia arriba */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada al flotar */
+        }
+
+        /* Keyframes para la animación del degradado de fondo */
+        @keyframes gradient-animation {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Estilos para el botón flotante de "volver al inicio" */
+        #backToTopBtn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background-color: #3b82f6; /* Color azul de Tailwind */
+            color: white;
+            padding: 1rem;
+            border-radius: 9999px; /* Para hacerlo redondo */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 999;
+            opacity: 0; /* Inicialmente oculto */
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        #backToTopBtn.show {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header section: Contains logo, title, and navigation links. -->
+    <header class="bg-blue-800 text-white p-4 shadow-md flex items-center justify-between rounded-b-xl">
+        <div class="flex-1 text-left">
+            <!-- Logo Icon: A cross icon from Font Awesome. -->
+            <i class="fas fa-cross text-2xl md:text-3xl lg:text-4xl"></i>
+        </div>
+        <!-- Main Title of the page. -->
+        <h1 class="text-xl md:text-3xl lg:text-4xl font-extrabold flex-grow text-center">Santos y Oraciones</h1>
+        <!-- Navigation links to different sections of the page. -->
+        <nav class="flex-1 text-right">
+            <a href="#saints-cards" class="mx-2 md:mx-4 text-md md:text-lg hover:underline transition duration-300">Oraciones</a>
+            <a href="#santos-list-interactive" class="mx-2 md:mx-4 text-md md:text-lg hover:underline transition duration-300">Historias</a>
+            <!-- New navigation link for Milagros -->
+            <a href="#milagros-section" class="mx-2 md:mx-4 text-md md:text-lg hover:underline transition duration-300">Milagros</a>
+        </nav>
+    </header>
+
+    <!-- Main content section -->
+    <main class="flex-grow container mx-auto p-4 md:p-8">
+        <!-- Section for Oraciones -->
+        <section id="saints-cards" class="rounded-xl shadow-lg p-6 mb-8 floating-section">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6 text-center">Colección de Oraciones</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Prayer Card 1 -->
+                <div class="flip-card cursor-pointer">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://www.iglesiaenaragon.com/wp-content/uploads/2023/06/5.-jueves-22-J.jpg" alt="Padre Nuestro" class="w-25 h-25 rounded-media object-cover mb-4">
+                            <h2 class="text-2xl font-bold text-blue-800">Padre Nuestro</h2>
+                        </div>
+                        <div class="flip-card-back bg-blue-600">
+                            <h3 class="text-xl font-semibold text-white mb-3">Padre Nuestro</h3>
+                            <p class="text-white leading-relaxed">Padre nuestro que estás en el cielo,
+                            santificado sea tu Nombre;
+                            venga a nosotros tu Reino;
+                            hágase tu voluntad, en la tierra como en el cielo.
+                            Danos hoy nuestro pan de cada día;
+                            perdona nuestras ofensas, como también nosotros perdonamos a los que nos ofenden;
+                            no nos dejes caer en la tentación,
+                            y líbranos del mal. 
+                            Amén.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prayer Card 2 -->
+                <div class="flip-card cursor-pointer">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://www.semana.com/resizer/v2/CZ7JWMMAEFCRVC2FN3SPQX2BLA.jpg?auth=5628dda9551807f231bc8a3733b84c17651396574834b973b658241310326c80&smart=true&quality=75&width=1280&height=720" alt="Ave Maria" class="w-25 h-25 rounded-media object-cover mb-4">
+                            <h2 class="text-2xl font-bold text-green-800">Ave Maria</h2>
+                        </div>
+                        <div class="flip-card-back bg-green-600">
+                            <h3 class="text-xl font-semibold text-white mb-3">Ave Maria</h3>
+                            <p class="text-white leading-relaxed">Dios te salve, María, llena eres de gracia, el Señor es contigo. Bendita tú eres entre todas las mujeres, y bendito es el fruto de tu vientre, Jesús. Santa María, Madre de Dios, ruega por nosotros, pecadores, ahora y en la hora de nuestra muerte. Amén</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prayer Card 3 -->
+                <div class="flip-card cursor-pointer">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://parroquiadesantodomingo.org/wp-content/uploads/2020/06/gloria-al-padre.jpg" alt="Gloria" class="w-25 h-25 rounded-media object-cover mb-4">
+                            <h2 class="text-2xl font-bold text-purple-800">Gloria</h2>
+                        </div>
+                        <div class="flip-card-back bg-purple-600">
+                            <h3 class="text-xl font-semibold text-white mb-3">Gloria</h3>
+                            <p class="text-white leading-relaxed">Gloria al Padre
+                            y al Hijo
+                            y al Espíritu Santo.
+                            Como era en el principio,
+                            ahora y siempre,
+                            por los siglos de los siglos. Amén.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Prayer Card 1 -->
+                <div class="flip-card cursor-pointer">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://wallpapers.com/images/featured/jesus-con-ovejas-8tggfp4le3mnqfau.jpg" alt="Padre Nuestro" class="w-25 h-25 rounded-media object-cover mb-4">
+                            <h2 class="text-2xl font-bold text-blue-800">Credo</h2>
+                        </div>
+                        <div class="flip-card-back bg-blue-600">
+                            <h3 class="text-xl font-semibold text-white mb-3">Credo</h3>
+                            <p class="text-white leading-relaxed">Creo en Dios,
+                                Padre Todopoderoso,
+                                Creador del cielo y de la tierra.
+                                Creo en Jesucristo, su único Hijo,
+                                Nuestro Señor,
+                                que fue concebido por obra y
+                                gracia del Espíritu Santo,
+                                nació de Santa María Virgen,
+                                padeció bajo el poder de Poncio
+                                Pilato
+                                fue crucificado,
+                                muerto y sepultado,
+                                descendió a los infiernos,
+                                al tercer día resucitó de entre
+                                los muertos,
+                                subió a los cielos
+                                y está sentado a la derecha
+                                de Dios, Padre todopoderoso.
+                                Desde allí ha de venir a
+                                juzgar a vivos y muertos.
+                                Creo en el Espíritu Santo,
+                                la santa Iglesia católica,
+                                la comunión de los santos,
+                                el perdón de los pecados,
+                                la resurrección de la carne
+                                y la vida eterna.
+                                Amén.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prayer Card 2 -->
+                <div class="flip-card cursor-pointer">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://oem.com.mx/elsoldemorelia/img/21339088/1732460795/BASE_LANDSCAPE/480/image.webp" alt="Ave Maria" class="w-25 h-25 rounded-media object-cover mb-4">
+                            <h2 class="text-2xl font-bold text-green-800">Salve</h2>
+                        </div>
+                        <div class="flip-card-back bg-green-600">
+                            <h3 class="text-xl font-semibold text-white mb-3">Salve</h3>
+                            <p class="text-white leading-relaxed">Dios te salve, Reina 
+                            y Madre de misericordia,
+                            vida, dulzura y esperanza nuestra;
+                            Dios te salve.
+                            A ti llamamos 
+                            los desterrados hijos de Eva;
+                            a ti suspiramos, gimiendo y llorando
+                            en este valle de lágrimas.
+                            Ea, pues, Señora, abogada nuestra,
+                            vuelve a nosotros esos tus ojos 
+                            misericordiosos;
+                            y después de este destierro, 
+                            muéstranos a Jesús,
+                            fruto bendito de tu vientre.
+
+                            ¡Oh, clementísima, oh piadosa, 
+                            oh dulce Virgen María!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prayer Card 3 -->
+                <div class="flip-card cursor-pointer">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <img src="https://static.wixstatic.com/media/4ff602_0dcf3c579ee64d1c9a6c43b2cec0c98c~mv2.jpg/v1/fill/w_1000,h_521,al_c,q_85,usm_0.66_1.00_0.01/4ff602_0dcf3c579ee64d1c9a6c43b2cec0c98c~mv2.jpg" alt="Gloria" class="w-25 h-25 rounded-media object-cover mb-4">
+                            <h2 class="text-2xl font-bold text-purple-800">Pesame</h2>
+                        </div>
+                        <div class="flip-card-back bg-purple-600">
+                            <h3 class="text-xl font-semibold text-white mb-3">Pesame</h3>
+                            <p class="text-white leading-relaxed">Pésame, Dios mío, y me arrepiento de todo
+                            corazón de haberos ofendido.
+                            Pésame por el Infierno que merecí y por el
+                            Cielo que perdí; pero mucho más me pesa
+                            porque, pecando ofendí a un Dios tan bueno
+                            y tan grande como Vos.
+                            Antes querría haber muerto que haberos
+                            ofendido, y propongo firmemente no pecar
+                            más, y evitar las ocasiones próximas de
+                            pecado.
+                            Amén</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section for Historias -->
+        <section id="santos-list-interactive" class="rounded-xl shadow-lg p-6 mb-8 floating-section">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6 text-center">Historias de Santos</h2>
+            <div class="space-y-4">
+                <!-- Saint 1: San Francisco de Asís -->
+                <div class="saint-item flex items-center bg-blue-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/3b82f6/FFFFFF?text=SF" alt="San Francisco de Asís" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-blue-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="San Francisco de Asís"
+                                data-full-story="Nacido en Asís, Italia, en 1182, Francisco renunció a una vida de riqueza y placer para dedicarse por completo a Dios. Fundó la Orden Franciscana, viviendo en pobreza, obediencia y castidad. Es famoso por su amor a la naturaleza y por ser el primer santo en recibir los estigmas de Cristo. Su vida fue un testimonio de humildad, amor y paz, inspirando a millones a seguir el camino de la sencillez y el servicio a los más necesitados.">
+                            San Francisco de Asís
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Renunció a la riqueza, fundó los Franciscanos y amó la naturaleza.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 2: Santa Teresa de Ávila -->
+                <div class="saint-item flex items-center bg-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/FF0000/FFFFFF?text=ST" alt="Santa Teresa de Ávila" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-red-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="Santa Teresa de Ávila"
+                                data-full-story="Nacida en Ávila, España, en 1515, Santa Teresa de Jesús fue una mística, escritora y reformadora de la Orden del Carmelo. A pesar de enfrentar grandes dificultades, llevó a cabo una profunda reforma que revitalizó la vida contemplativa. Sus escritos, como 'El Castillo Interior', son clásicos de la literatura mística. Fue la primera mujer en ser declarada Doctora de la Iglesia, reconocida por su profunda espiritualidad y su enseñanza sobre la oración.">
+                            Santa Teresa de Ávila
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Mística, escritora y reformadora del Carmelo.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 3: San Antonio de Padua -->
+                <div class="saint-item flex items-center bg-yellow-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/FFD700/000000?text=SA" alt="San Antonio de Padua" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-yellow-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="San Antonio de Padua"
+                                data-full-story="Nacido en Lisboa, Portugal, en 1195, Fernando de Bulhões se unió a los Franciscanos y tomó el nombre de Antonio. Fue un predicador elocuente y un gran conocedor de las Escrituras, viajando por Italia y Francia. Es popularmente invocado para encontrar objetos perdidos, pero su verdadera misión fue la de ser un faro de la fe y un defensor de los pobres. Su vida se caracterizó por la caridad y la profunda devoción a Jesús.">
+                            San Antonio de Padua
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Predicador elocuente, protector de los pobres y encontrado de objetos perdidos.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 4: Santa Catalina de Siena -->
+                <div class="saint-item flex items-center bg-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/22c55e/FFFFFF?text=SC" alt="Santa Catalina de Siena" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-green-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="Santa Catalina de Siena"
+                                data-full-story="Nacida en Siena, Italia, en 1347, Santa Catalina fue una terciaria dominica conocida por su misticismo, su influencia política y su compromiso con la paz. Trabajó incansablemente para la unidad de la Iglesia y para traer de vuelta al Papa a Roma desde Aviñón. Fue declarada Doctora de la Iglesia, destacando por su profunda relación con Dios y su valiente defensa de la verdad y la justicia.">
+                            Santa Catalina de Siena
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Mística, influyente política y defensora de la unidad de la Iglesia.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 5: San Juan Pablo II -->
+                <div class="saint-item flex items-center bg-blue-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/3b82f6/FFFFFF?text=JP2" alt="San Juan Pablo II" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-blue-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="San Juan Pablo II"
+                                data-full-story="Karol Józef Wojtyła, nacido en Polonia en 1920, fue elegido Papa en 1978. Su pontificado fue uno de los más largos de la historia, marcado por sus extensos viajes, su papel crucial en la caída del comunismo y su defensa de la dignidad humana y la vida. Con gran carisma, se conectó con jóvenes y familias de todo el mundo, dejando un legado de fe, esperanza y un llamado a no tener miedo.">
+                            San Juan Pablo II
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Papa carismático, viajero y defensor de la dignidad humana.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 6: Santa Clara de Asís -->
+                <div class="saint-item flex items-center bg-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/FF0000/FFFFFF?text=CA" alt="Santa Clara de Asís" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-red-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="Santa Clara de Asís"
+                                data-full-story="Nacida en Asís, Italia, en 1194, Clara Offreduccio se inspiró en San Francisco para vivir una vida de pobreza radical. Fundó la Orden de las Damas Pobres (Clarisas), dedicándose a la oración contemplativa y a la vida en comunidad. Su vida fue un ejemplo de fe inquebrantable, incluso cuando defendió a su convento de los invasores solo con la Eucaristía. Es patrona de la televisión, invocada por la visión que tuvo de la Misa desde su celda.">
+                            Santa Clara de Asís
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Fundadora de las Clarisas, ejemplo de fe y patrona de la televisión.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 7: San Agustín de Hipona -->
+                <div class="saint-item flex items-center bg-yellow-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/FFD700/000000?text=AG" alt="San Agustín de Hipona" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-yellow-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="San Agustín de Hipona"
+                                data-full-story="San Agustín, nacido en Tagaste, Numidia (actual Argelia) en 354, fue uno de los más influyentes Padres y Doctores de la Iglesia. Después de una juventud de búsqueda intelectual y espiritual, se convirtió al cristianismo gracias a la influencia de su madre, Santa Mónica, y de San Ambrosio. Sus 'Confesiones' son un relato conmovedor de su camino hacia Dios, y sus obras teológicas han moldeado el pensamiento cristiano por siglos.">
+                            San Agustín de Hipona
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Influyente Padre y Doctor de la Iglesia, autor de 'Confesiones'.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 8: Santa Faustina Kowalska -->
+                <div class="saint-item flex items-center bg-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/22c55e/FFFFFF?text=FK" alt="Santa Faustina Kowalska" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-green-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="Santa Faustina Kowalska"
+                                data-full-story="Santa María Faustina Kowalska, nacida en Polonia en 1905, fue una humilde religiosa de la Congregación de las Hermanas de Nuestra Señora de la Misericordia. Recibió revelaciones divinas sobre la Divina Misericordia de Jesús, que registró en su 'Diario'. A través de ella, Jesús pidió la institución de la Fiesta de la Divina Misericordia y la difusión de la imagen de Jesús Misericordioso. Su vida fue un llamado a confiar plenamente en la misericordia de Dios.">
+                            Santa Faustina Kowalska
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Apóstol de la Divina Misericordia, autora del 'Diario'.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 9: San Vicente de Paúl -->
+                <div class="saint-item flex items-center bg-blue-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/3b82f6/FFFFFF?text=VP" alt="San Vicente de Paúl" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-blue-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="San Vicente de Paúl"
+                                data-full-story="Nacido en Francia en 1581, San Vicente de Paúl dedicó su vida al servicio de los pobres y necesitados. Fundó la Congregación de la Misión (Padres Paúles) y, con Santa Luisa de Marillac, las Hijas de la Caridad, para cuidar a los enfermos y desfavorecidos. Es un faro de la caridad cristiana, mostrando que el amor a Dios se manifiesta en el servicio práctico al prójimo, especialmente a los más vulnerables.">
+                            San Vicente de Paúl
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Dedicado al servicio de los pobres, fundador de los Padres Paúles.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 10: Santa Gema Galgani -->
+                <div class="saint-item flex items-center bg-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/FF0000/FFFFFF?text=GG" alt="Santa Gema Galgani" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-red-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="Santa Gema Galgani"
+                                data-full-story="Santa Gema Galgani, nacida en Italia en 1878, fue una joven laica mística que experimentó visiones y estigmas. A pesar de una vida llena de sufrimiento y enfermedad, ofreció todo por amor a Jesús. Su vida fue un testimonio de la pasión de Cristo y de la unión con Él a través del dolor. Es un modelo de abandono a la voluntad de Dios y de fervor eucarístico.">
+                            Santa Gema Galgani
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Joven mística italiana, conocida por estigmas y amor a Jesús.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 11: San Martín de Porres -->
+                <div class="saint-item flex items-center bg-yellow-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/FFD700/000000?text=MP" alt="San Martín de Porres" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-yellow-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="San Martín de Porres"
+                                data-full-story="San Martín de Porres, nacido en Lima, Perú, en 1579, fue un fraile dominico mulato conocido por su humildad, su caridad hacia los pobres y enfermos, y su amor por los animales. A pesar de las dificultades raciales de su época, dedicó su vida al servicio, trabajando en la enfermería del convento y atendiendo a los necesitados sin distinción. Es un ejemplo de servicio desinteresado y de unión con Dios en las tareas más sencillas.">
+                            San Martín de Porres
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Fraile dominico peruano, conocido por su humildad y caridad.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 12: Santa Rita de Casia -->
+                <div class="saint-item flex items-center bg-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/22c55e/FFFFFF?text=RC" alt="Santa Rita de Casia" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-green-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="Santa Rita de Casia"
+                                data-full-story="Santa Rita de Casia, nacida en Italia en 1381, es conocida como la 'Santa de lo Imposible' debido a los muchos milagros atribuidos a su intercesión. Vivió una vida de gran sufrimiento, primero como esposa y madre, y luego como monja agustina. Su historia es un testimonio de perdón, paciencia y fe inquebrantable en medio de las adversidades, siempre confiando en la providencia divina.">
+                            Santa Rita de Casia
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Santa de lo Imposible, ejemplo de perdón y paciencia.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 13: San Judas Tadeo -->
+                <div class="saint-item flex items-center bg-blue-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/3b82f6/FFFFFF?text=JT" alt="San Judas Tadeo" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-blue-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="San Judas Tadeo"
+                                data-full-story="San Judas Tadeo fue uno de los doce apóstoles de Jesús, a menudo confundido con Judas Iscariote, de ahí su epíteto de 'olvidado' o 'desesperado'. Es el patrón de las causas difíciles y desesperadas, y su intercesión es ampliamente invocada por aquellos que enfrentan situaciones sin aparente solución. Su festividad se celebra el 28 de octubre junto con la de San Simón Apóstol.">
+                            San Judas Tadeo
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Apóstol de Jesús, patrón de las causas difíciles y desesperadas.</p>
+                    </div>
+                </div>
+
+                <!-- Saint 14: Santa Teresita del Niño Jesús -->
+                <div class="saint-item flex items-center bg-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img src="https://placehold.co/80x80/FF0000/FFFFFF?text=TJ" alt="Santa Teresita del Niño Jesús" class="w-20 h-20 rounded-full mr-4 object-cover">
+                    <div class="flex-grow">
+                        <span class="story-trigger font-medium text-red-800 cursor-pointer text-xl hover:underline"
+                                data-full-story-title="Santa Teresita del Niño Jesús"
+                                data-full-story="Santa Teresita del Niño Jesús, nacida en Francia en 1873, fue una monja carmelita que desarrolló el 'caminito de la infancia espiritual'. Su enseñanza se centra en realizar pequeños actos de amor y humildad en la vida diaria, confiando plenamente en la misericordia de Dios. Fue declarada Doctora de la Iglesia y es Patrona de las Misiones, a pesar de nunca haber salido de su convento. Prometió 'pasar su cielo haciendo el bien en la tierra'.">
+                            Santa Teresita del Niño Jesús
+                        </span>
+                        <p class="text-gray-700 text-sm mt-1">Monja carmelita, Doctora de la Iglesia y patrona de las misiones.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- New Section for Milagros -->
+        <section id="milagros-section" class="rounded-xl shadow-lg p-6 floating-section">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6 text-center">Milagros de los Santos</h2>
+            <div class="space-y-4">
+                <!-- Miracle Story 1: San Expedito -->
+                <div class="bg-red-50 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-xl font-semibold text-red-800 mb-3">El Milagro de San Expedito: "Hoy, no mañana"</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">Se narra que San Expedito, antes de su conversión, dudaba en abrazar la fe cristiana. Se le apareció un cuervo que le gritaba "Cras! Cras! Cras!" (Mañana! Mañana! Mañana!), intentando que postergara su decisión. Expedito, aplastando al cuervo con un gesto de determinación, respondió "¡Hodie! ¡Hodie! ¡Hodie!" (¡Hoy! ¡Hoy! ¡Hoy!), decidiendo convertirse de inmediato y no posponer su fe.</p>
+                    <button class="show-full-miracle text-red-600 hover:underline text-sm mt-1 inline-block"
+                            data-full-story-title="El Milagro de San Expedito: 'Hoy, no mañana'"
+                            data-full-story="Se narra que San Expedito, antes de su conversión, dudaba en abrazar la fe cristiana y lo quería dejar para el día siguiente. Se le apareció un cuervo que le gritaba 'Cras! Cras! Cras!' (¡Mañana! ¡Mañana! ¡Mañana!), intentando que postergara su decisión. Expedito, aplastando al cuervo con un gesto de determinación y pisoteando el tiempo, respondió '¡Hodie! ¡Hodie! ¡Hodie!' (¡Hoy! ¡Hoy! ¡Hoy!), decidiendo convertirse de inmediato al cristianismo y no posponer su fe un solo instante. Este episodio milagroso se ha convertido en un símbolo de la necesidad de actuar con prontitud en asuntos espirituales y de no aplazar la entrega a Dios.">
+                        Leer más
+                    </button>
+                </div>
+
+                <!-- Miracle Story 2: La Tilma de la Virgen de Guadalupe -->
+                <div class="bg-blue-50 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-xl font-semibold text-blue-800 mb-3">La Tilma de la Virgen de Guadalupe</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">En 1531, la Virgen María se apareció a San Juan Diego en el Tepeyac, México. Como prueba de sus apariciones, le pidió que recogiera rosas no estacionales y se las llevara al obispo. Al desplegar su tilma (manto de fibra de cactus) frente al obispo, las rosas cayeron, y en la tilma apareció milagrosamente la imagen de la Virgen de Guadalupe. Esta imagen, a pesar de estar en un material que debería haberse descompuesto en décadas, ha permanecido intacta por casi 500 años y presenta fenómenos inexplicables científicamente.</p>
+                    <button class="show-full-miracle text-blue-600 hover:underline text-sm mt-1 inline-block"
+                            data-full-story-title="La Tilma de la Virgen de Guadalupe"
+                            data-full-story="En 1531, la Virgen María se apareció a San Juan Diego, un humilde indígena chichimeca, en el cerro del Tepeyac, cerca de la Ciudad de México. La Virgen le pidió que construyera un templo en su honor. Como señal para el obispo, en su última aparición, le indicó a Juan Diego que recogiera rosas frescas de Castilla que habían florecido milagrosamente en el árido invierno. Juan Diego las llevó en su tilma (un manto rústico de fibra de cactus). Al desplegar la tilma ante el obispo Juan de Zumárraga, las rosas cayeron, y en la tela apareció impresa de forma milagrosa la imagen de la Virgen de Guadalupe. Esta tilma, un material orgánico de corta duración, no ha mostrado signos de deterioro a lo largo de casi 500 años y posee propiedades físicas y químicas que desafían la explicación científica, como la conservación de los colores y la ausencia de trazos de pincel, siendo uno de los milagros más icónicos y devotos de la cristiandad.">
+                        Leer más
+                    </button>
+                </div>
+
+                <!-- Miracle Story 3: San Francisco y el Lobo de Gubbio -->
+                <div class="bg-yellow-50 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-xl font-semibold text-yellow-800 mb-3">San Francisco y el Lobo de Gubbio</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">La historia narra que la ciudad de Gubbio estaba aterrorizada por un lobo feroz que atacaba al ganado y a las personas. San Francisco de Asís fue a encontrarse con el lobo, y milagrosamente, el animal se acercó a él mansamente. Francisco le habló como a un hermano, le pidió que dejara de hacer daño y le prometió que los habitantes de Gubbio lo alimentarían. El lobo, con una señal de su pata, 'aceptó' el pacto y vivió en paz con la gente hasta el final de sus días, demostrando el poder del amor y la armonía con la creación de Dios.</p>
+                    <button class="show-full-miracle text-yellow-600 hover:underline text-sm mt-1 inline-block"
+                            data-full-story-title="San Francisco y el Lobo de Gubbio"
+                            data-full-story="En la región de Umbría, la ciudad de Gubbio estaba sumida en el terror a causa de un lobo grande y feroz que no solo devoraba animales, sino que también atacaba a las personas. Nadie se atrevía a salir de los muros de la ciudad. San Francisco de Asís, al enterarse de la situación, decidió ir al encuentro del lobo, a pesar de las advertencias de los ciudadanos. Al encontrarse con el animal, el lobo corrió hacia él con la boca abierta. Francisco, haciendo la señal de la cruz, le ordenó en el nombre de Dios que no hiciera daño. Milagrosamente, el lobo detuvo su carrera, cerró la boca y se tendió mansamente a los pies del santo. San Francisco le habló con amor, reprendiéndolo por su crueldad y prometiéndole que los habitantes de Gubbio lo alimentarían si él prometía no hacer más daño. El lobo, con gestos de sumisión y moviendo la cola, 'aceptó' el pacto. San Francisco y el lobo entraron juntos en la ciudad, ante el asombro de todos. El lobo de Gubbio vivió allí pacíficamente por dos años, siendo alimentado por la gente, hasta que murió de vejez. Este milagro es un símbolo del poder de la paz, la reconciliación y el amor de San Francisco por toda la creación de Dios.">
+                        Leer más
+                    </button>
+                </div>
+
+                <!-- Miracle Story 4: El Milagro Eucarístico de San Antonio de Padua y la Mula -->
+                <div class="bg-green-50 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-xl font-semibold text-green-800 mb-3">El Milagro Eucarístico de San Antonio de Padua y la Mula</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">En una ocasión, mientras San Antonio de Padua predicaba sobre la Eucaristía, un hombre llamado Bonvillo, que dudaba de la Presencia Real de Jesús en la Hostia, lo desafió a que probara su fe con un milagro. Antonio aceptó y propuso que su mula, después de ser privada de alimento por tres días, se arrodillaría ante el Santísimo Sacramento si la Eucaristía era realmente el Cuerpo de Cristo. Al cabo de los tres días, la mula ignoró el heno y se arrodilló ante la Hostia consagrada que San Antonio sostenía, convenciendo a Bonvillo y a muchos otros de la verdad de la fe.</p>
+                    <button class="show-full-miracle text-green-600 hover:underline text-sm mt-1 inline-block"
+                            data-full-story-title="El Milagro Eucarístico de San Antonio de Padua y la Mula"
+                            data-full-story="Durante su predicación, San Antonio de Padua se encontró con un hereje llamado Bonvillo, quien negaba la Presencia Real de Jesús en la Eucaristía. Bonvillo desafió a Antonio a que demostrara la verdad de su fe con un milagro. Le propuso que si él privaba a su mula de alimento durante tres días, y luego el animal, en lugar de comer el heno, se arrodillaba ante el Santísimo Sacramento, él creería. San Antonio aceptó el desafío. Pasados los tres días, se reunió una gran multitud para presenciar el evento. La mula fue llevada al lugar y se le ofreció un fardo de heno. Al mismo tiempo, San Antonio apareció con la Eucaristía en sus manos. En lugar de ir hacia la comida, la mula, para asombro de todos, se arrodilló profundamente ante el Santísimo Sacramento. Este milagro conmovió a Bonvillo y a muchos incrédulos, quienes se convirtieron y abrazaron la fe católica, testificando el poder de Dios presente en la Eucaristía y la intercesión de San Antonio.">
+                        Leer más
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for full stories -->
+    <div id="fullStoryModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" id="closeModalBtn">&times;</button>
+            <h3 id="modalTitle" class="text-2xl font-bold text-gray-800 mb-4"></h3>
+            <p id="modalContent" class="text-gray-700 leading-relaxed text-lg"></p>
+        </div>
+    </div>
+
+    <!-- Floating Back to Top Button -->
+    <button id="backToTopBtn" class="hidden">
+        <i class="fas fa-arrow-up text-xl"></i>
+    </button>
+     <!-- Footer section -->
+    <footer class="bg-blue-800 text-white p-4 text-center mt-8 rounded-t-xl shadow-md">
+        <p class="text-sm md:text-base">Creador &copy; OM1972 <br> 2025 Santos y Oraciones. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- JavaScript for interactivity -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Flip card functionality
+            document.querySelectorAll('.flip-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    card.classList.toggle('is-flipped');
+                });
+            });
+
+            // Modal functionality for saint stories
+            const fullStoryModal = document.getElementById('fullStoryModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+
+            document.querySelectorAll('.story-trigger, .show-full-miracle').forEach(trigger => {
+                trigger.addEventListener('click', (event) => {
+                    // Stop propagation to prevent flip-card from flipping if it's a nested trigger
+                    event.stopPropagation(); 
+                    modalTitle.textContent = trigger.dataset.fullStoryTitle;
+                    modalContent.textContent = trigger.dataset.fullStory;
+                    fullStoryModal.classList.add('show');
+                });
+            });
+
+            closeModalBtn.addEventListener('click', () => {
+                fullStoryModal.classList.remove('show');
+            });
+
+            fullStoryModal.addEventListener('click', (event) => {
+                // Close modal if clicking outside the content
+                if (event.target === fullStoryModal) {
+                    fullStoryModal.classList.remove('show');
+                }
+            });
+
+            // Back to top button functionality
+            const backToTopBtn = document.getElementById('backToTopBtn');
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) { // Show button after scrolling down 300px
+                    backToTopBtn.classList.add('show');
+                } else {
+                    backToTopBtn.classList.remove('show');
+                }
+            });
+
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
